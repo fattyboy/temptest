@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Pragma" content="no-cache" >
+<meta http-equiv="Expires" content="-1" >
+<meta http-equiv="Cache-Control" content="no-cache" >
+<title>Tools of TMX</title>
+
+<meta name="apple-touch-fullscreen" content="yes" >
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+
+<script>
+function $id(id){
+	return document.getElementById(id)
+}
+
+function init(){
+	
+	if (window.localStorage){
+		var xml=window.localStorage["xml"];
+		$id("in-put").value=xml||"";
+	}
+}
+
+function stringify(obj){
+	// return JSON.stringify(obj);
+	var str=[];
+	for (var key in obj){
+		var value=obj[key];
+		if (typeof value=="string"){
+			value='"'+value+'"';
+		}else if ( value instanceof Array){
+			value=JSON.stringify(value);
+		}
+		str.push( key+":"+value);
+	}
+	return "{ "+str.join(",")+" }";
+
+}
+
+function transform(){
+	var inPut=$id("in-put");
+
+	var xml=inPut.value;
+	window.localStorage["xml"]=xml;
+
+	xml=xml.replace(/\/>/igm,"></object>");
+	var mapData=$id("map-data");
+	mapData.innerHTML=xml;
+
+	var all=[];
+
+	var mainObj={};
+	
+
+	var mapDom=mapData.getElementsByTagName("map")[0];
+	if (mapDom){
+		var mapObj=parseMap(mapDom);
+		var output=$id("out-put-map");
+		output.value=stringify( mapObj );
+	}
+
+
+	var groups=mapData.getElementsByTagName("objectgroup");
+	for (var i=0;i<groups.length;i++){
+		var groupDom=groups[i];
+		var groupObject=parseObjectGroup(groupDom,{});
+
+		var name=groupObject.name;
+		var code=[];
+		if (groupObject.objects){
+			groupObject.objects.forEach(function(c){
+				code.push( stringify( c ) );
+			})			
+		}
+		var output=$id("out-put-"+name);
+		if (!output){
+			output=createTextarea("out-put-"+name);
+		}
+		var str=code.join(" , \n");
+		str= "[\n"+str+"\n]"
+		all.push(
+			"var "+name+"Data = "+str +" ;"
+		)
+		output.value=str;
+	}
+
+	var layers=mapData.getElementsByTagName("layer");
+	for (var i=0;i<layers.length;i++){
+		var layer=layers[i];
+		var name=layer.getAttribute("name");
+		
+		var data=layer.getElementsByTagName("data")[0];
+
+		var output=$id("out-put-"+name);
+		if (!output){
+			// continue;
+			output=createTextarea("out-put-"+name);
+		}
+		str=data.innerHTML;
+		str= "[ "+str+" ]"
+		output.value=str;
+		all.push(
+			"var "+name+"Data = "+str +" ;"
+		)
+
+	}
+
+	$id("out-put-all").value= all.join("\n") ;
+	return all.join("\n");
+
+}
+
+
+function parseMap(mapDom,mapObj){
+	mapObj=mapObj||{};
+	mapObj.column=parseValue(mapDom.getAttribute("width"));
+	mapObj.row=parseValue(mapDom.getAttribute("height"));
+	mapObj.tileWidth=parseValue(mapDom.getAttribute("tilewidth"));
+	mapObj.tileHeight=parseValue(mapDom.getAttribute("tileheight"));
+	mapObj.width=mapObj.tileWidth*mapObj.column;
+	mapObj.height=mapObj.tileHeight*mapObj.row;
+	return mapObj;
+}
+
+function parseObjectGroup(groupDom,groupObj){
+	groupObj=groupObj||{};
+	
+	parseBaseAttributes(groupDom,groupObj);
+
+	parseProperties(groupDom,groupObj);
+
+
+	var objectDoms=groupDom.getElementsByTagName("object");
+	objectDoms=Array.prototype.slice.call(objectDoms,0);
+
+	var objects=[];
+	objectDoms.forEach(function(objectDom,idx){
+		var objectObj={};
+		parseObject(objectDom,objectObj);
+		objects.push(objectObj);
+	});
+	groupObj.objects=objects;
+	
+	return groupObj;
+}
+
+function parseObject(objectDom,objectObj){
+	objectObj=objectObj||{};
+	
+	parseBaseAttributes(objectDom,objectObj);
+
+	parseProperties(objectDom,objectObj);
+
+	var polygonDom=objectDom.querySelector("polygon");
+	var polylineDom=objectDom.querySelector("polyline");
+
+	if (polygonDom){
+		objectObj.polygon=parsePolygon(polygonDom,objectObj);
+	}else if (polylineDom){
+		objectObj.polyline=parsePolyline(polylineDom,objectObj);
+	}else if (objectObj.type=="circle"){
+		objectObj.x= objectObj.x+objectObj.w/2;
+		objectObj.y= objectObj.y+objectObj.h/2;
+		objectObj.r= (objectObj.w+objectObj.h)/4;
+		delete objectObj.w;
+		delete objectObj.h;
+	}
+
+
+	return objectObj;
+}
+
+function parsePolyline(polyDom,parentObj){
+	var ox=parentObj.x,
+		oy=parentObj.y;
+	var points=polyDom.getAttribute("points");
+	points=points.split(" ");
+	points.forEach(function(p,i){
+		p=p.split(",");
+		var x=ox+Number(p[0]);
+		var y=oy+Number(p[1]);
+		points[i]=[x,y];
+		
+	});
+	return points;
+}
+
+function parsePolygon(polyDom,parentObj){
+	var points=parsePolyline(polyDom,parentObj);
+	// TODO : sort points 
+	return points;
+}
+
+function parseBaseAttributes(dom,obj){
+	var name=dom.getAttribute("name");
+	if (name){
+		obj.name=name;
+	}
+	var type=dom.getAttribute("type");
+	if (type){
+		obj.type=type;
+	}
+
+	var x=dom.getAttribute("x");
+	if (x){
+		obj.x=Number(x);
+	}
+	var y=dom.getAttribute("y");
+	if (y){
+		obj.y=Number(y);
+	}
+
+	var w=dom.getAttribute("width");
+	if (w){
+		obj.w=Number(w);
+	}
+	var h=dom.getAttribute("height");
+	if (h){
+		obj.h=Number(h);
+	}
+
+	return obj;
+}
+
+function parseProperties(dom,obj){
+	var children=dom.childNodes;
+	children=Array.prototype.slice.call(children,0);
+
+	var properties;
+	var s=children.some(function(c){
+		if ( String(c.tagName).toLowerCase()=='properties'){
+			properties=c;
+			return true;
+		}
+	});
+	if (!properties){
+		return;
+	}
+	var pList=properties.querySelectorAll("property");
+	pList=Array.prototype.slice.call(pList,0);
+	pList.forEach(function(p){
+		var name=p.getAttribute("name");
+		var value=p.getAttribute("value");
+
+		obj[name]=parseValue(value);
+	})
+
+
+}
+
+function parseValue(v){
+	if (v==="true"){
+		v=true;
+	}else if(v==="false"){
+		v=false;
+	}else if(v==="null"){
+		v=null;
+	}else if(!isNaN(Number(v))){
+		v=Number(v);
+	}
+	return v;
+}
+
+function createTextarea(name){
+	var textarea=document.createElement("textarea");
+	textarea.style.width="500px";
+	textarea.style.height="120px";
+	textarea.style.display="block";
+	textarea.style.marginBottom="15px";
+	textarea.id=name;
+	textarea.name=name;
+	var text=document.createTextNode(name+" : ");
+	var br=document.createElement("br");
+
+	$id("output-area").appendChild(text);
+	$id("output-area").appendChild(textarea);
+	return textarea;
+}
+</script>
+
+</head>
+<body onload="init()">
+<textarea id="in-put" style="width:500px;height:50px"></textarea>
+<input type="button" value="run" onclick="transform()"><br>
+map<br>
+<textarea id="out-put-map" style="width:500px;height:40px"></textarea><br>
+all<br>
+<textarea id="out-put-all" style="width:500px;height:100px"></textarea><br>
+<div id="output-area">
+
+</div>
+
+
+
+<div style="display:none" id="map-data">
+
+</div>
+
+</body>
+
+</html>
+
+
+

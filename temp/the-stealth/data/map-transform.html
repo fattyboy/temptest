@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Pragma" content="no-cache" >
+<meta http-equiv="Expires" content="-1" >
+<meta http-equiv="Cache-Control" content="no-cache" >
+<title>Tools of Vis</title>
+
+<meta name="apple-touch-fullscreen" content="yes" >
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+
+<script>
+function $id(id){
+	return document.getElementById(id)
+}
+
+function init(){
+	
+
+}
+function transform(){
+	var inPut=$id("in-put");
+	var mapData=$id("map-data");
+	mapData.innerHTML=inPut.value;
+
+	var all=[];
+
+
+
+	var maps=mapData.getElementsByTagName("map");
+	if (maps&&maps.length>0){
+		var data=maps[0].getElementsByTagName("data")[0];
+		data=data.innerHTML;
+		data="var mapData = [ "+data+" ]; ";
+	}
+
+
+
+
+	var groups=mapData.getElementsByTagName("objectgroup");
+	
+
+	for (var i=0;i<groups.length;i++){
+		var group=groups[i];
+		var name=group.getAttribute("name");
+		var objects=group.getElementsByTagName("object");
+		objects=Array.prototype.slice.call(objects,0);
+		var polys=_transform(objects);
+		var code=[];
+		polys.forEach(function(c){
+			code.push( JSON.stringify( c ) );
+
+		})
+		var str=code.join(" , \n");
+		// $id("out-put").innerHTML=str;
+		str= "[ \n "+str+" \n ]"
+		all.push(
+			"var "+name+"Data = "+str +" ;"
+		)
+		$id("out-put-"+name).value=str;
+	}
+	all.push(data);
+
+	$id("out-put-all").value= all.join("\n") ;
+	return all.join("\n");
+
+}
+
+var scale=Math.SQRT2;
+
+function _transform(objects){
+	var polys=[];
+	var IDSEED=1;
+
+	objects.forEach(function(obj,idx){
+		var ox=Number(obj.getAttribute("x"));
+		var oy=Number(obj.getAttribute("y"));
+		// console.log(x,y);
+		var polygon=obj.getElementsByTagName("polygon")[0];
+		var points=polygon.getAttribute("points");
+		points=points.split(" ");
+	
+		points.forEach(function(p,i){
+			p=p.split(",");
+			var x=ox+Number(p[0]);
+			var y=oy+Number(p[1]);
+			
+			points[i]=[x*scale,y*scale];
+		
+
+		});
+		polys.push(points);
+
+	})
+	
+	return polys;
+
+}
+
+</script>
+
+</head>
+<body onload="init()">
+<textarea id="in-put" style="width:500px;height:50px"></textarea>
+<input type="button" value="run" onclick="transform()"><br>
+all<br>
+<textarea id="out-put-all" style="width:500px;height:100px"></textarea><br>
+block<br>
+<textarea id="out-put-block" style="width:500px;height:100px"></textarea><br>
+enemy<br>
+<textarea id="out-put-enemy" style="width:500px;height:100px"></textarea><br>
+trigger<br>
+<textarea id="out-put-trigger" style="width:500px;height:100px"></textarea><br>
+
+
+<div style="display:none" id="map-data">
+
+</div>
+
+</body>
+
+</html>
+
+
+

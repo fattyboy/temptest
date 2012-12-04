@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Pragma" content="no-cache" >
+<meta http-equiv="Expires" content="-1" >
+<meta http-equiv="Cache-Control" content="no-cache" >
+<title>the Tool for TMX</title>
+
+<meta name="apple-touch-fullscreen" content="yes" >
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<script src="JSONPath.js" ></script>
+<script>
+
+var tmxContentDiv=null;
+function parseMap(tmxText){
+
+	var map=null;
+
+	if (!tmxContentDiv){
+		tmxContentDiv=document.createElement("div");
+	}
+	tmxContentDiv.innerHTML=tmxText;
+	var mapDom=tmxContentDiv.getElementsByTagName("map")[0];
+	if (mapDom){
+		map=parseNode(mapDom,"map");
+	}
+
+	return map;
+
+}
+
+function parseNode(nodeDom,tag){
+	tag=tag|| (nodeDom.tagName||"").toLowerCase();
+	var node={};
+	var tagScheme=scheme[tag];
+	if (!tagScheme){
+		console.log("< Can't find : " +tag+" >");
+	}
+	if (tagScheme.value){
+		node.value=("value" in nodeDom) ? nodeDom.value : nodeDom.innerHTML;
+	}
+
+	var attributes=tagScheme.attributes;
+	attributes.forEach(function(a){
+		var v=nodeDom.getAttribute(a);
+		if (v===null){
+			v=nodeDom[a];
+			if (v===undefined){
+				v=null;
+			}
+		}else if ( !isNaN(Number(v)) ){
+			v=Number(v);
+			
+		}else if (v==="true"){
+			v=true
+		}else if (v==="false"){
+			v=false
+		}else if (v==="null"){
+			v=null
+		}
+		node[a]=v;
+	});
+
+	var children=tagScheme.children;
+	children.forEach(function(c,idx){
+		var childNodes=nodeDom.getElementsByTagName(c);
+		childNodes=Array.prototype.slice.call(childNodes,0);
+		// node[c]=[];
+		// node[c]._index=idx;
+		if (childNodes.length>0){
+			node[c]=[];
+			node[c]._index=idx;
+			childNodes.forEach(function(cNode){
+				node[c].push( parseNode(cNode ) )
+			})
+		}else{
+			node[c]=null;
+		}
+	});
+
+
+
+	return node;
+}
+
+
+var scheme={};
+
+scheme.map={
+	attributes : "version, orientation, width, height, tilewidth, tileheight",
+	children : "properties, tileset, layer, objectgroup",
+	value : false
+}; 
+
+scheme.tileset={
+	attributes : "firstgid, source, name, tilewidth, tileheight, spacing, margin",
+	children : "properties, image, tile",
+	value : false
+}; 
+
+scheme.image={
+	attributes : "format, id, source, trans, value, width, height",
+	children : null,
+	value : false
+}; 
+
+scheme.tile={
+	attributes : "id,gid",
+	children : "properties, image",
+	value : false
+}; 
+
+scheme.layer={
+	attributes : "name, x, y, width, height, opacity, visible",
+	children : "properties, data",
+	value : false
+}; 
+
+scheme.data={
+	attributes : "encoding, compression",
+	children : "tile",
+	value : true
+}; 
+
+scheme.objectgroup={
+	attributes : "name, color, x, y, width, height, opacity, visible",
+	children : "properties, object",
+	value : false
+}; 
+
+scheme.object={
+	attributes : "name, type, x, y, width, height, gid, visible",
+	children : "properties, polygon, polyline, image",
+	value : false
+}; 
+
+scheme.polygon={
+	attributes : "points",
+	children : null,
+	value : false
+}; 
+
+scheme.polyline={
+	attributes : "points",
+	children : null,
+	value : false
+}; 
+
+scheme.properties={
+	attributes : null,
+	children : "property",
+	value : false
+}; 
+
+scheme.property={
+	attributes : "name, value",
+	children : null,
+	value : false
+}; 
+
+function initScheme(scheme){
+
+	for (var tag in scheme){
+		var node=scheme[tag];
+
+		var attributes=(node.attributes||"").trim();
+		var _strs=attributes.split(",");
+		_strs.forEach(function(s,idx){
+			_strs[idx]=s.trim();
+		})
+		node.attributes=_strs;
+
+		var children=(node.children||"").trim();
+		var _strs=!children?[]:children.split(",");
+		_strs.forEach(function(s,idx){
+			_strs[idx]=s.trim();
+		})
+		node.children=_strs;
+
+		var value=node.value;
+
+
+	}
+	return scheme;
+
+}
+
+initScheme(scheme);
+
+
+function $id(id){
+	return document.getElementById(id)
+}
+
+
+
+function init(){
+	
+
+
+}
+
+function pointsToArray(points,ox,oy,scaleX,scaleY){
+	ox=ox||0;
+	oy=oy||0;
+	scaleX=scaleX||1;
+	scaleY=scaleY||1;
+
+	points=points.split(" ");
+	points.forEach(function(p,i){
+		p=p.split(",");
+		var x=ox+Number(p[0]);
+		var y=oy+Number(p[1]);
+		
+		points[i]=[x*scaleX,y*scaleY];
+	});
+	return points
+}
+
+function transform(){
+
+	var inPut=$id("in-put");
+	var map=parseMap(inPut.value);
+	console.log(map);
+
+	test(map);
+}
+
+var t;
+function test(map){
+	
+ //t=jsonPath(map, "$.objectgroup[1].object[1].polygon[0].points")
+ //
+
+var polygonList=jsonPath(map, "$..object[?(@.polygon)]");
+if (polygonList){
+	polygonList.forEach(function(object){
+		var poly=object.polygon[0];
+		poly.points=pointsToArray(poly.points,object.x,object.y)
+	})
+}
+var polylineList=jsonPath(map, "$..object[?(@.polyline)]");
+if (polylineList){
+	polylineList.forEach(function(object){
+		var poly=object.polyline[0];
+		poly.points=pointsToArray(poly.points,object.x,object.y)
+	})
+}
+
+
+}
+
+
+
+</script>
+
+</head>
+<body onload="init()">
+<textarea id="in-put" style="width:500px;height:50px"></textarea>
+<input type="button" value="run" onclick="transform()"><br>
+
+
+</body>
+
+</html>
+
+
+

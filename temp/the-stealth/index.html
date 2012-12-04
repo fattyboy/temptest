@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="-1" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<!-- 
+<meta name="viewport" content="user-scalable=no, width=device-width, height=device-height, initial-scale=0.5, minimum-scale=0.5, maximum-scale=0.5" />
+ -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-touch-fullscreen" content="yes" />
+
+     <link rel="stylesheet" href="./main.css"/>
+
+<title> 视野 & isomap </title>
+
+<style type="text/css">
+
+body {
+	background-color : #111;
+}
+
+#container {
+	border : 1px solid #fff;
+	background-color : #66cc44;
+}
+
+.slot {
+position: absolute;
+background-color : #ffffff;
+border : 1px solid #333333;
+opacity: 0.3;
+}
+
+.stick {
+position: absolute;
+background-color : #ccccff;
+}
+
+#stick2 {
+	background-color : #ffffff;
+	border : 1px solid #333333;
+	color : #ffffff;
+	font-size : 48px;
+	opacity: 0.3;
+}
+
+	</style>
+
+
+<script src="./client.js"></script>
+<script src="./Const.js"></script>
+
+
+<script src="./lib/common/Base.js"></script>
+<script src="./lib/common/Timer.js"></script>
+<script src="./lib/common/CountDown.js"></script>
+<script src="./lib/common/LinkedList.js"></script>
+<script src="./lib/common/ActionQueue.js"></script>
+<script src="./lib/common/MoveQueue.js"></script>
+
+<script src="./lib/GT-Toucher/Controller.js"></script>
+<script src="./lib/GT-Toucher/TouchWrapper.js"></script>
+<script src="./lib/GT-Toucher/Listener.js"></script>
+<script src="./lib/GT-Toucher/custom/Tap.js"></script>
+<script src="./lib/GT-Toucher/custom/Joystick.js"></script>
+
+
+
+<script src="./lib/viewfield/Polygon.js"></script>
+<script src="./lib/viewfield/ViewTriangle.js"></script>
+<script src="./lib/viewfield/draw.js"></script>
+
+
+<script src="./lib/Base.js"></script>
+<script src="./lib/Event.js"></script>
+<script src="./lib/Loader.js"></script>
+
+
+<script src="./lib/game/TiledMap.js"></script>
+<script src="./lib/game/IsoGround.js"></script>
+<script src="./lib/game/Trigger.js"></script>
+
+<script src="./lib/game/Animation.js"></script>
+<!-- <script src="./lib/game/Sprite.js"></script> -->
+<script src="./lib/game/SpriteBase.js"></script>
+<script src="./lib/game/Scene.js"></script>
+<script src="./lib/game/Game.js"></script>
+
+
+<script src="./js/Class/Player.js"></script>
+<script src="./js/Class/Enemy.js"></script>
+<script src="./js/Class/Block.js"></script>
+<script src="./js/Class/Gear.js"></script>
+<script src="./js/Class/GameScene.js"></script>
+
+
+
+<script src="./data/_mockdata.js"></script>
+<script src="./js/config.js"></script>
+<script src="./js/input.js"></script>
+<script src="./js/load-data.js"></script>
+<script src="./js/scene-config.js"></script>
+
+
+<script src="./main.js"></script>
+
+</head>
+<body onload="">
+
+	<div class="joystick" >
+		<div id="slot1" class="slot">
+			<div id="stick1" class="stick">
+
+			</div>
+		</div>
+	</div>
+	<div id="stick2" class="stick">
+		<span id="sticktext" style="display:block;margin:25px;margin-top:10px;color:red;">J
+		</span>
+	</div>
+
+<!-- <div id="outer" ><div id="middle" > -->
+<div id="container" >
+
+<canvas id="canvas"></canvas>
+
+
+</div>
+<!-- </div></div> -->
+
+<div id="ui-pool" style="display:none">
+
+</div>
+
+</body>
+
+</html>

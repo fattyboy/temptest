@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Pragma" content="no-cache" >
+<meta http-equiv="Expires" content="-1" >
+<meta http-equiv="Cache-Control" content="no-cache" >
+<title>Tools of Sprite</title>
+
+<meta name="apple-touch-fullscreen" content="yes" >
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+
+<script>
+function $id(id){
+	return document.getElementById(id)
+}
+
+function init(){
+	
+	if (window.localStorage){
+		xml=window.localStorage["xml"]||"";
+		oox=window.localStorage["oox"]||0;
+		ooy=window.localStorage["ooy"]||0;
+		duration=window.localStorage["duration"]||100;
+		$id("in-put").value=xml;
+		$id("oox").value=oox;
+		$id("ooy").value=ooy;
+		$id("duration").value=duration;
+	}
+}
+
+function stringify(obj){
+	// return JSON.stringify(obj);
+	var str=[];
+	for (var key in obj){
+		var value=obj[key];
+		if (typeof value=="string"){
+			value='"'+value+'"';
+		}else if ( value instanceof Array){
+			value=JSON.stringify(value);
+		}
+		str.push( key+":"+value);
+	}
+	return "{ "+str.join(",")+" }";
+
+}
+
+var xml="";
+var oox=0;
+var ooy=0;
+var duration=100;
+
+function transform(){
+	oox=$id("oox").value||0;
+	ooy=$id("ooy").value||0;
+	duration=$id("duration").value||0;
+	var inPut=$id("in-put");
+
+	var xml=inPut.value;
+	window.localStorage["xml"]=xml;
+	window.localStorage["oox"]=oox;
+	window.localStorage["ooy"]=ooy;
+	window.localStorage["duration"]=duration;
+
+	xml=xml.replace(/<(\w+)\/>/igm,"<$1></$1>");
+	var xmlData=$id("xml-data");
+	xmlData.innerHTML=xml;
+
+	var all=[];
+
+	var keyDomList=xmlData.querySelectorAll("plist > dict > key");
+	keyDomList=Array.prototype.slice.call(keyDomList,0);
+	var frames;
+	keyDomList.some(function(key,idx){
+		var html=key.innerHTML;
+		if (html && html.trim()=="frames"){
+			frames=key;
+			return true;
+		}
+	})
+	var dict=getNextDom(frames,"dict");
+	var allFrames=[];
+
+	var children=getChildKey(dict);
+	children.forEach(function(node){
+		var dict=parseFrame(getNextDom(node,"dict") );
+		var f={};
+		var _key=node.innerHTML;
+		var textureRect = parseStringNode(dict.textureRect);
+		var spriteSourceSize = parseStringNode(dict.spriteSourceSize);
+		var spriteColorRect = parseStringNode(dict.spriteColorRect);
+		var spriteOffset = parseStringNode(dict.spriteOffset);
+		var spriteSize = this.parseStringNode(dict.spriteSize);
+
+		var ow=spriteSourceSize[0];
+		var oh=spriteSourceSize[1];
+
+		var left=spriteColorRect[0][0];
+		var top=spriteColorRect[0][1];
+
+		f.x=textureRect[0][0];
+		f.y=textureRect[0][1];
+		f.w=textureRect[1][0];
+		f.h=textureRect[1][1];
+		f.ox=oox-left;
+		f.oy=ooy-top;
+		f.d=duration-0||0;
+
+		allFrames.push(f);
+	})
+	console.log(allFrames);
+	var out=[];
+	allFrames.forEach(function(f){
+		out.push( stringify(f) );
+	})
+
+	$id("out-put-all").value="[\n"+out.join(",\n")+"\n]";
+
+}
+
+function parseStringNode(value){
+		if (typeof value=="string"){
+			value = eval(value.replace(/\{/g, "[").replace(/\}/g, "]"));
+		}
+		return value;
+	}
+
+function getChildKey(dom){
+	var keys=[];
+	var children=dom.childNodes;
+	children=Array.prototype.slice.call(children,0);
+	children.forEach(function(node){
+		if (String(node.tagName).toLowerCase()=="key"){
+			keys.push(node);
+		}
+	});
+
+	return keys;
+}
+
+function parseValue(v){
+	if (v==="array"){
+		v=[];
+	}else if (v==="true"){
+		v=true;
+	}else if(v==="false"){
+		v=false;
+	}else if(v==="null"){
+		v=null;
+	}else if(!isNaN(Number(v))){
+		v=Number(v);
+	}
+	return v;
+}
+
+function parseFrame(dict){
+	if (!dict){
+		return null;
+	}
+	var info={};
+
+	var keys=getChildKey(dict);
+	keys.forEach(function(node){
+		var k=node.innerHTML;
+		var value=getNextDom(node)||null;
+		if (value){
+			var html=value.innerHTML||"";
+			value=html.trim()||String(value.tagName).toLowerCase();
+			value=parseValue(value);
+		}
+		info[k]=value;
+	})
+
+	return info;
+}
+
+function getNextDom(key,tag){
+	var dom=key.nextSibling;
+	while(dom){
+
+		if (tag && String(dom.tagName).toLowerCase()==tag){
+			return dom;
+		}else if(dom.nodeType==1){
+			return dom;
+		}
+		dom=dom.nextSibling;
+	}
+}
+</script>
+
+</head>
+<body onload="init()">
+<textarea id="in-put" style="width:500px;height:50px"></textarea>
+<input type="button" value="run" onclick="transform()"><br><br>
+originX:<input type="text" value="0" id="oox"><br>
+originY:<input type="text" value="0" id="ooy"><br>
+duration:<input type="text" value="0" id="duration"><br>
+<br>
+out-put<br>
+
+
+<textarea id="out-put-all" style="width:500px;height:200px"></textarea>
+<br>
+
+
+
+<div style="display:none" id="xml-data">
+
+</div>
+
+</body>
+
+</html>
+
+
+

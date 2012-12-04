@@ -1,0 +1,323 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="-1" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<meta name="viewport" content="user-scalable=no, width=device-width, height=device-height, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-touch-fullscreen" content="yes" />
+
+ 
+<title> 视野 test </title>
+
+<style type="text/css">
+body, html{height: 100%;}
+
+body  {
+	font-size:12px;
+	border:none 0px;
+	margin:0px;
+	padding:0px;
+	/*overflow : hidden;*/
+	height : 100%;
+
+	/*background-color : #000;*/
+
+}
+
+body, div {
+	-webkit-user-select: none;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+	-webkit-touch-callout: none;	
+	-webkit-text-size-adjust: none;
+}
+
+body, div ,canvas {
+    image-rendering: optimizeSpeed;
+	interpolation-mode: nearest-neighbor;
+    -webkit-image-rendering: optimizeSpeed;
+    -webkit-interpolation-mode: nearest-neighbor;
+}
+
+canvas {
+	-webkit-transform : translate3d(0,0,0);
+	transform : translate3d(0,0,0);
+}
+#canvas {
+	
+}
+
+#container {
+	position:relative;
+	border: 2px solid black;	
+	top:-100px;
+	overflow: hidden;
+	margin : 0 auto;
+	background-color : #fff;
+	-webkit-transform : scale(0.5) ;
+
+}
+
+#container canvas {
+	position:absolute;
+	left : 0px;
+	top : 0px;
+}
+
+
+
+
+	</style>
+
+
+<script src="./Polygon.js"></script>
+<script src="./ViewTriangle.js"></script>
+<script src="./draw.js"></script>
+
+<script>
+
+
+function $id(id){
+	return document.getElementById(id);
+}
+
+function getDomOffset(dom){
+	if (dom.getBoundingClientRect){
+		//{left:left, top:top}
+		return dom.getBoundingClientRect();
+	}
+	var left = dom.offsetLeft, top = dom.offsetTop;
+	while((dom = dom.parentNode) && dom != document.body && dom != document){
+		left += dom.offsetLeft;
+		top += dom.offsetTop;
+	}
+	return {left:left, top:top};
+}
+
+
+
+function setDomPos(dom,x,y){
+	dom.style.webkitTransform="translate3d("+ x+"px,"+y+"px,0px)";
+	// dom.style.left=x+"px"; dom.style.top=y+"px";	
+	// dom.style.OTransform="translate3d("+ x+"px,"+y+"px,0px)";
+}
+
+
+
+
+var WIDTH=960, HEIGHT=600;
+var FPS=30;
+
+var redraw=false;
+var blocks=[];
+var step=0.05;
+var MOUSEDOWN=false;
+var TRANSLATE=[0,0];
+var ROTATION=0;
+var SCALE=[1,1];
+// var TRANSLATE=[-550,-210];
+
+var viewRadius=600;
+var viewAngle=1.2;
+var viewX=578.5076305479803 ;
+var viewY=217.72061840580525 ;
+var viewRotation= -0.024599975672162377;
+
+var viewfield;
+
+var container , canvas , context ;
+
+
+function  init(){
+
+	canvas=$id("canvas");
+
+	container=canvas.parentNode;
+	container.style.width=WIDTH+"px";
+	container.style.height=HEIGHT+"px";
+
+	canvas.width=WIDTH;
+	canvas.height=HEIGHT;
+	canvas.style.zIndex=10;
+
+	context=canvas.getContext("2d");
+	context.lineWidth=4;
+	context.strokeStyle="black";
+	context.fillStyle="white";
+
+
+	initEvent();
+
+	setTimeout(function(){
+		var pos=getDomOffset(canvas);
+		canvas.pageX=pos.left;
+		canvas.pageY=pos.top;
+	
+		start();
+	},100);
+
+	viewfield=new ViewTriangle({
+			x : viewX ,
+			y : viewY, 
+			radius : viewRadius,
+			angle : viewAngle
+	});
+	viewfield.init();
+	
+}
+
+function initEvent(){
+		canvas.addEventListener("mousedown",function(event){
+			//console.log(event);
+			redraw=true;
+			MOUSEDOWN=1;
+			if (event.shiftKey){
+				MOUSEDOWN=-1;
+			}
+			if (event.altKey){
+				var x= event.pageX- canvas.pageX;
+				var y= event.pageY- canvas.pageY;
+
+				viewfield.setPos(x-TRANSLATE[0],y-TRANSLATE[1]);
+				MOUSEDOWN=0;
+			}
+		});
+		canvas.addEventListener("mouseup",function(event){
+			MOUSEDOWN=false;
+		});
+
+}
+
+function start(){
+	createBlocks();
+	viewfield.setRotation( viewRotation);
+	redraw=true;
+	setInterval(function(){
+		run();
+	},50)
+
+}
+
+
+function createBlocks(){
+	var polys=[
+ [[0,1578.262335608374],[1629.1740238538057,1578.262335608374],[1629.1740238538057,1629.1740238538057],[0,1629.1740238538057]] , 
+[[1578.262335608374,0],[1629.1740238538057,0],[1629.1740238538057,1578.262335608374],[1578.262335608374,1578.262335608374]] , 
+[[0,0],[50.91168824543143,0],[50.91168824543143,1578.262335608374],[0,1578.262335608374]] , 
+[[50.91168824543143,0],[1578.262335608374,0],[1578.262335608374,50.91168824543143],[50.91168824543143,50.91168824543143]] , 
+[[305.47012947258855,254.55844122715712],[560.0285706997457,254.55844122715712],[560.0285706997457,407.2935059634514],[305.47012947258855,407.2935059634514]] , 
+[[763.6753236814714,254.55844122715712],[967.3220766631971,254.55844122715712],[967.3220766631971,305.47012947258855],[763.6753236814714,305.47012947258855]] , 
+[[967.3220766631971,254.55844122715712],[1018.2337649086285,254.55844122715712],[1018.2337649086285,509.11688245431424],[967.3220766631971,509.11688245431424]] , 
+[[763.6753236814714,458.2051942088828],[967.3220766631971,458.2051942088828],[967.3220766631971,509.11688245431424],[763.6753236814714,509.11688245431424]] , 
+[[1170.9688296449228,203.6467529817257],[1374.6155826266486,203.6467529817257],[1374.6155826266486,356.38181771802],[1170.9688296449228,356.38181771802]] , 
+[[203.6467529817257,610.9402589451771],[305.47012947258855,610.9402589451771],[305.47012947258855,712.76363543604],[203.6467529817257,712.76363543604]] , 
+[[509.11688245431424,610.9402589451771],[610.9402589451771,610.9402589451771],[610.9402589451771,865.4987001723342],[509.11688245431424,865.4987001723342]] , 
+[[610.9402589451771,712.76363543604],[763.6753236814714,712.76363543604],[763.6753236814714,814.5870119269028],[610.9402589451771,814.5870119269028]] , 
+[[967.3220766631971,763.6753236814714],[1170.9688296449228,763.6753236814714],[1170.9688296449228,916.4103884177656],[967.3220766631971,916.4103884177656]] , 
+[[1323.703894381217,661.8519471906085],[1425.52727087208,661.8519471906085],[1425.52727087208,967.3220766631971],[1323.703894381217,967.3220766631971]] , 
+[[203.6467529817257,1018.2337649086285],[305.47012947258855,1018.2337649086285],[305.47012947258855,1425.52727087208],[254.55844122715712,1425.52727087208],[203.6467529817257,1425.52727087208]] , 
+[[305.47012947258855,1018.2337649086285],[458.2051942088828,1018.2337649086285],[458.2051942088828,1069.1454531540599],[305.47012947258855,1069.1454531540599]] , 
+[[458.2051942088828,1018.2337649086285],[509.11688245431424,1018.2337649086285],[509.11688245431424,1170.9688296449228],[458.2051942088828,1170.9688296449228]] , 
+[[305.47012947258855,1374.6155826266486],[458.2051942088828,1374.6155826266486],[458.2051942088828,1425.52727087208],[305.47012947258855,1425.52727087208]] , 
+[[458.2051942088828,1323.703894381217],[509.11688245431424,1323.703894381217],[509.11688245431424,1425.52727087208],[458.2051942088828,1425.52727087208]] , 
+[[814.5870119269028,1069.1454531540599],[916.4103884177656,1069.1454531540599],[916.4103884177656,1323.703894381217],[814.5870119269028,1323.703894381217]] , 
+[[1120.0571413994915,1221.8805178903542],[1272.7922061357856,1221.8805178903542],[1272.7922061357856,1323.703894381217],[1120.0571413994915,1323.703894381217]] , 
+[[1170.9688296449228,1323.703894381217],[1272.7922061357856,1323.703894381217],[1272.7922061357856,1476.4389591175113],[1170.9688296449228,1476.4389591175113]] , 
+[[1476.4389591175113,1374.6155826266486],[1578.262335608374,1374.6155826266486],[1578.262335608374,1476.4389591175113],[1476.4389591175113,1476.4389591175113]] 
+
+
+	]
+
+	polys.forEach(function(p,idx){
+		var block=new Polygon({
+			id : idx,
+			vertices : p 
+		})
+		block.init();
+		block.updateAABB();
+		blocks[idx]=block;
+	});
+
+
+}
+
+function run(deltaTime){
+	if (MOUSEDOWN!==false){
+			
+
+		redraw=true;
+		viewfield.setRotation( viewfield.rotation+ step*MOUSEDOWN);
+	}
+
+	if (!redraw){
+		return;
+	}
+	context.clearRect(0,0,WIDTH,HEIGHT);
+
+	context.save();
+	context.translate(TRANSLATE[0],TRANSLATE[1]);
+	context.scale(SCALE[0],SCALE[1]);
+	context.rotate(ROTATION);
+
+	var deltaTime=50;
+	viewfield.update();
+	var t=Date.now();
+	for (var i=0;i<1;i++){
+		var ps=viewfield.updateField(blocks);
+	}
+	// console.log(Date.now()-t)
+
+	blocks.forEach(function(b){
+		drawPoly(context,b.vertices , "rgba(0,0,255,1)" );
+	})
+	drawView(context,ps,"rgba(140,255,140,0.5)",true);
+	
+	context.restore()
+	redraw=false;	
+}
+
+
+Demo={
+
+	0 : function(){
+		redraw=true;
+
+		TRANSLATE[0]=WIDTH/2;
+		
+		// SCALE[1]=0.5;
+		// ROTATION=Math.PI/4;
+	},
+
+	1 : function(){
+		redraw=true;
+		SCALE[1]=0.5;
+	},
+
+	2 : function(){
+		redraw=true;
+		ROTATION=Math.PI/4;
+	}
+
+
+}
+</script>
+
+</head>
+<body onload="init()">
+
+
+<div id="container" >
+
+<canvas id="canvas"></canvas>
+
+
+
+</div>
+
+</body>
+
+</html>
