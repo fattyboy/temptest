@@ -162,8 +162,8 @@ function create(){
 	var ot=Config.viewTall;
 	for (var r=0;r<Config.dir;r++){
 		for (var c=0;c<Config.frame;c++){
-			var x=c*(Config.viewWidth+Config.margin*2);
-			var y=r*(Config.viewHeight+ot+Config.margin*2);
+			var x=c*(Config.viewWidth+Config.margin*2)+Config.margin;
+			var y=r*(Config.viewHeight+ot+Config.margin*2)+Config.margin;
 			var offset=(c%2)*Config.offset;
 			Config.viewTall=ot-offset;
 			y+=offset;
@@ -175,7 +175,47 @@ function create(){
 	Config.viewTall=ot;
 	img.src=canvas.toDataURL();
 
+	createCode();
+}
 
+function createCode(){
+	var anims={};
+	var code=[];
+	for (var r=0;r<Config.dir;r++){
+		var w=(Config.viewWidth+Config.margin*2);
+		var h=(Config.viewHeight+Config.viewTall+Config.margin*2);
+		var a={
+			originX : Config.halfViewWidth+Config.margin,
+			originY : Config.halfViewHeight+Config.viewTall+Config.margin,
+			frames : []
+		}
+		anims["dir"+r]=a;
+		var frameCode=[]
+		for (var c=0;c<Config.frame;c++){
+			var f={	
+				x : c*w,
+				y : r*h,
+				w : w,
+				h : h,
+				d : 250
+			};
+			a.frames.push(f);
+
+			frameCode.push("    "+stringify(f));
+		}
+		var animCode=[
+				"dir"+r+" : {",
+				"  originX : "+a.originX+",",
+				"  originY : "+a.originY+",",
+				"  frames : [\n"+frameCode.join(",\n")+"]",
+				"},"
+			]
+		code.push(animCode.join("\n"))
+		
+	}
+
+
+	$id("out-put").value="{\n"+code.join("\n")+"\n}";
 }
 
 function parseValue(v){
@@ -228,8 +268,9 @@ dir:<input type="text" value="0" id="dir"><br>
 color:<input type="text" value="#ffffff" id="color">&#160;&#160;,&#160;&#160;
 borderColor:<input type="text" value="#000000" id="bcolor"><br>
 <input type="button" value="create" onclick="create()"><br>
-<hr><br>
-
+out-put<br>
+<textarea id="out-put" style="width:500px;height:150px"></textarea>
+<br><hr><br>
 <img id="img" src="">
 <canvas id="canvas"></canvas>
 
