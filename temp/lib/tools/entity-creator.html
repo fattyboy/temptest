@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Pragma" content="no-cache" >
+<meta http-equiv="Expires" content="-1" >
+<meta http-equiv="Cache-Control" content="no-cache" >
+<title>Tools of Sprite</title>
+
+<meta name="apple-touch-fullscreen" content="yes" >
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+
+<script>
+
+function $id(id){
+	return document.getElementById(id)
+}
+
+function init(){
+	
+	if (window.localStorage){
+		$id("vw").value=window.localStorage["vw"]||128;
+		$id("vh").value=window.localStorage["vh"]||64;
+		$id("vt").value=window.localStorage["vt"]||0;
+		$id("frame").value=window.localStorage["frame"]||8;
+		$id("dir").value=window.localStorage["dir"]||8;
+		$id("color").value=window.localStorage["color"]||"#ffffff";
+		$id("bcolor").value=window.localStorage["bcolor"]||"#000000";
+	}
+}
+
+var Config={
+	viewRotation : Math.PI/4,
+	viewWidth : 0,
+	viewHeight : 0,
+	viewTall : 0,
+	margin : 1 ,
+	offset : 2
+}
+
+function initConfig(){
+	Config.viewWidth=window.localStorage["vw"]=Number($id("vw").value)||128;
+	Config.viewHeight=window.localStorage["vh"]=Number($id("vh").value)||64;
+	Config.viewTall=window.localStorage["vt"]=Number($id("vt").value)||0;
+	Config.frame=window.localStorage["frame"]=Number($id("frame").value)||8;
+	Config.dir=window.localStorage["dir"]=Number($id("dir").value)||8;
+	Config.color=window.localStorage["color"]=$id("color").value||"#ffffff";
+	Config.bcolor=window.localStorage["bcolor"]=$id("bcolor").value||"#000000";
+
+	Config.halfViewWidth=Config.viewWidth/2;
+	Config.halfViewHeight=Config.viewHeight/2;
+			
+	Config.viewScaleY=Config.viewScaleY||Config.viewHeight/Config.viewWidth;
+	Config.viewScaleZ=Math.sqrt(1-Config.viewScaleY*Config.viewScaleY);
+	Config.cos=Math.cos(Config.viewRotation);
+	Config.sin=Math.sin(Config.viewRotation);
+
+	Config.width=(Config.viewWidth+Config.margin*2)*Config.frame;
+	Config.height=(Config.viewHeight+Config.viewTall+Config.margin*2)*Config.dir;
+
+	Config.dirPoint=[
+		[ Config.viewWidth, Config.halfViewHeight ],
+		[],
+		[ Config.halfViewWidth, Config.viewHeight ],
+		[],
+		[ 0 , Config.halfViewHeight ],
+		[],
+		[ Config.halfViewWidth,0 ],
+		[]
+	];
+Config.dirPoint[1][0]=(Config.dirPoint[0][0]+Config.dirPoint[2][0])/2;
+Config.dirPoint[1][1]=(Config.dirPoint[0][1]+Config.dirPoint[2][1])/2;
+
+Config.dirPoint[3][0]=(Config.dirPoint[2][0]+Config.dirPoint[4][0])/2;
+Config.dirPoint[3][1]=(Config.dirPoint[2][1]+Config.dirPoint[4][1])/2;
+
+Config.dirPoint[5][0]=(Config.dirPoint[4][0]+Config.dirPoint[6][0])/2;
+Config.dirPoint[5][1]=(Config.dirPoint[4][1]+Config.dirPoint[6][1])/2;
+
+Config.dirPoint[7][0]=(Config.dirPoint[6][0]+Config.dirPoint[0][0])/2;
+Config.dirPoint[7][1]=(Config.dirPoint[6][1]+Config.dirPoint[0][1])/2;
+
+}
+
+function drawEntity(context,x,y){
+	x=x||0;
+	y=y||0;
+	context.save();
+	context.fillStyle=Config.color;
+	context.strokeStyle=Config.bcolor;
+	context.translate(x,y);
+	context.beginPath();
+	var path=[
+		[ 0 , Config.halfViewHeight ],
+		[ Config.halfViewWidth,0 ],
+		[ Config.viewWidth, Config.halfViewHeight ],
+		[ Config.viewWidth, Config.halfViewHeight+Config.viewTall ],
+		[ Config.halfViewWidth,Config.viewHeight+Config.viewTall ],
+		[ 0 , Config.halfViewHeight+Config.viewTall ]
+	];
+	context.moveTo(path[0][0],path[0][1]);
+	context.lineTo(path[1][0],path[1][1]);
+	context.lineTo(path[2][0],path[2][1]);
+	if (Config.viewTall){
+		context.lineTo(path[3][0],path[3][1]);
+		context.lineTo(path[4][0],path[4][1]);
+		context.lineTo(path[5][0],path[5][1]);
+	}else{
+		context.lineTo(Config.halfViewWidth,Config.viewHeight);		
+	}
+	context.lineTo(path[0][0],path[0][1]);
+	context.fill();
+
+	if (Config.viewTall){
+		var line1=[
+			[ 0 , Config.halfViewHeight ],
+			[ Config.halfViewWidth,Config.viewHeight ],
+			[ Config.viewWidth, Config.halfViewHeight ]
+		];
+		var line2=[
+			[ Config.halfViewWidth,Config.viewHeight ],
+			[ Config.halfViewWidth,Config.viewHeight+Config.viewTall ],
+		]
+		context.moveTo(line1[0][0],line1[0][1]);
+		context.lineTo(line1[1][0],line1[1][1]);
+		context.lineTo(line1[2][0],line1[2][1]);
+		context.moveTo(line2[0][0],line2[0][1]);
+		context.lineTo(line2[1][0],line2[1][1]);
+	}
+	context.stroke();
+	context.closePath();
+	context.restore();
+}
+
+function drawEntityDir(context,x,y,dir){
+	x=x||0;
+	y=y||0;
+	dir=dir||0;
+	context.save();
+	context.lineWidth=3;
+	context.translate(x,y);
+	context.beginPath();
+	context.moveTo(Config.halfViewWidth,Config.halfViewHeight);
+	context.lineTo(Config.dirPoint[dir][0],Config.dirPoint[dir][1]);
+	context.stroke();
+	context.closePath();
+	context.restore();
+}
+function create(){
+	initConfig();
+
+	var img=$id("img");
+	img.width=Config.width;
+	img.height=Config.height;
+	var canvas=$id("canvas");
+	canvas.width=Config.width;
+	canvas.height=Config.height;
+	var context=canvas.getContext("2d");
+
+	var ot=Config.viewTall;
+	for (var r=0;r<Config.dir;r++){
+		for (var c=0;c<Config.frame;c++){
+			var x=c*(Config.viewWidth+Config.margin*2);
+			var y=r*(Config.viewHeight+ot+Config.margin*2);
+			var offset=(c%2)*Config.offset;
+			Config.viewTall=ot-offset;
+			y+=offset;
+			drawEntity(context,x,y);
+			drawEntityDir(context,x,y,r);
+		}
+	}
+
+	Config.viewTall=ot;
+	img.src=canvas.toDataURL();
+
+
+}
+
+function parseValue(v){
+	if (v==="array"){
+		v=[];
+	}else if (v==="true"){
+		v=true;
+	}else if(v==="false"){
+		v=false;
+	}else if(v==="null"){
+		v=null;
+	}else if(!isNaN(Number(v))){
+		v=Number(v);
+	}
+	return v;
+}
+function stringify(obj){
+	// return JSON.stringify(obj);
+	var str=[];
+	for (var key in obj){
+		var value=obj[key];
+		if (typeof value=="string"){
+			value='"'+value+'"';
+		}else if ( value instanceof Array){
+			value=JSON.stringify(value);
+		}
+		str.push( key+":"+value);
+	}
+	return "{ "+str.join(",")+" }";
+
+}
+
+</script>
+<style>
+#img {
+	border :1px solid black;
+}
+#canvas {
+	display: none;
+}
+</style>
+</head>
+<body onload="init()">
+<br>
+viewWidth:<input type="text" value="0" id="vw">&#160;&#160;,&#160;&#160;
+viewHeight:<input type="text" value="0" id="vh">&#160;&#160;,&#160;&#160;
+viewTall:<input type="text" value="0" id="vt"><br>
+frame:<input type="text" value="0" id="frame">&#160;&#160;,&#160;&#160;
+dir:<input type="text" value="0" id="dir"><br>
+color:<input type="text" value="#ffffff" id="color">&#160;&#160;,&#160;&#160;
+borderColor:<input type="text" value="#000000" id="bcolor"><br>
+<input type="button" value="create" onclick="create()"><br>
+<hr><br>
+
+<img id="img" src="">
+<canvas id="canvas"></canvas>
+
+</body>
+
+</html>
+
+
+
