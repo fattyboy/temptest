@@ -12,6 +12,9 @@
 
 		length : 0,
 
+		// TODO : push pop  unshift shift 
+		
+
 		clear : function(){
 			this.head._next=this.tail;
 			this.tail._prev=this.head;

@@ -26,8 +26,13 @@ function init(){
 		$id("vt").value=window.localStorage["vt"]||0;
 		$id("frame").value=window.localStorage["frame"]||8;
 		$id("dir").value=window.localStorage["dir"]||8;
+		$id("offset").value=window.localStorage["offset"]||"0";
+		$id("margin").value=window.localStorage["margin"]||"0";
 		$id("color").value=window.localStorage["color"]||"#ffffff";
 		$id("bcolor").value=window.localStorage["bcolor"]||"#000000";
+		$id("imgId").value=window.localStorage["imgId"]||"p0";
+		$id("loop").value=window.localStorage["loop"]||"true";
+
 	}
 }
 
@@ -36,8 +41,12 @@ var Config={
 	viewWidth : 0,
 	viewHeight : 0,
 	viewTall : 0,
+	loop : true ,
+	imgId : null,
+
 	margin : 1 ,
-	offset : 2
+	offset : 2 ,
+
 }
 
 function initConfig(){
@@ -46,8 +55,12 @@ function initConfig(){
 	Config.viewTall=window.localStorage["vt"]=Number($id("vt").value)||0;
 	Config.frame=window.localStorage["frame"]=Number($id("frame").value)||8;
 	Config.dir=window.localStorage["dir"]=Number($id("dir").value)||8;
+	Config.offset=window.localStorage["offset"]=Number($id("offset").value)||0;
+	Config.margin=window.localStorage["margin"]=Number($id("margin").value)||0;
 	Config.color=window.localStorage["color"]=$id("color").value||"#ffffff";
 	Config.bcolor=window.localStorage["bcolor"]=$id("bcolor").value||"#000000";
+	Config.imgId=window.localStorage["imgId"]=$id("imgId").value||"p0";
+	Config.loop=window.localStorage["loop"]=$id("loop").value||"true";
 
 	Config.halfViewWidth=Config.viewWidth/2;
 	Config.halfViewHeight=Config.viewHeight/2;
@@ -166,6 +179,7 @@ function create(){
 			var y=r*(Config.viewHeight+ot+Config.margin*2)+Config.margin;
 			var offset=(c%2)*Config.offset;
 			Config.viewTall=ot-offset;
+			console.log(Config.offset)
 			y+=offset;
 			drawEntity(context,x,y);
 			drawEntityDir(context,x,y,r);
@@ -203,10 +217,14 @@ function createCode(){
 
 			frameCode.push("    "+stringify(f));
 		}
+
+
 		var animCode=[
 				"dir"+r+" : {",
-				"  originX : "+a.originX+",",
-				"  originY : "+a.originY+",",
+				"  img : "+'"'+Config.imgId+'" ,',
+				"  loop : "+Config.loop+" ,",
+				"  originX : "+a.originX+" ,",
+				"  originY : "+a.originY+" ,",
 				"  frames : [\n"+frameCode.join(",\n")+"]",
 				"},"
 			]
@@ -262,14 +280,18 @@ function stringify(obj){
 <br>
 viewWidth:<input type="text" value="0" id="vw">&#160;&#160;,&#160;&#160;
 viewHeight:<input type="text" value="0" id="vh">&#160;&#160;,&#160;&#160;
-viewTall:<input type="text" value="0" id="vt"><br>
+viewTall:<input type="text" value="0" id="vt">&#160;&#160;,&#160;&#160;
+margin:<input type="text" value="2" id="margin">&#160;&#160;,&#160;&#160;
+offset:<input type="text" value="2" id="offset"><br>
 frame:<input type="text" value="0" id="frame">&#160;&#160;,&#160;&#160;
 dir:<input type="text" value="0" id="dir"><br>
+imgId:<input type="text" value="p0" id="imgId">&#160;&#160;,&#160;&#160;
+loop:<input type="text" value="true" id="loop"><br>
 color:<input type="text" value="#ffffff" id="color">&#160;&#160;,&#160;&#160;
 borderColor:<input type="text" value="#000000" id="bcolor"><br>
 <input type="button" value="create" onclick="create()"><br>
 out-put<br>
-<textarea id="out-put" style="width:500px;height:150px"></textarea>
+<textarea id="out-put" style="width:500px;height:100px"></textarea>
 <br><hr><br>
 <img id="img" src="">
 <canvas id="canvas"></canvas>
