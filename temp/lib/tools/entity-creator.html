@@ -14,27 +14,6 @@
 
 <script>
 
-function $id(id){
-	return document.getElementById(id)
-}
-
-function init(){
-	
-	if (window.localStorage){
-		$id("vw").value=window.localStorage["vw"]||128;
-		$id("vh").value=window.localStorage["vh"]||64;
-		$id("vt").value=window.localStorage["vt"]||0;
-		$id("frame").value=window.localStorage["frame"]||8;
-		$id("dir").value=window.localStorage["dir"]||8;
-		$id("offset").value=window.localStorage["offset"]||"0";
-		$id("margin").value=window.localStorage["margin"]||"0";
-		$id("color").value=window.localStorage["color"]||"#ffffff";
-		$id("bcolor").value=window.localStorage["bcolor"]||"#000000";
-		$id("imgId").value=window.localStorage["imgId"]||"p0";
-		$id("loop").value=window.localStorage["loop"]||"true";
-
-	}
-}
 
 var Config={
 	viewRotation : Math.PI/4,
@@ -46,21 +25,57 @@ var Config={
 
 	margin : 1 ,
 	offset : 2 ,
-
+	ortho : 0
 }
 
+
+function loadValue(name,defValue){
+	var v=$id(name).value=window.localStorage[name]||defValue;
+	return v;
+}
+function setValue(name,fn,defValue){
+	var v=$id(name).value;
+	v=Config[name]=window.localStorage[name]=(fn?fn(v):v)||defValue;
+	return v;
+}
+
+
+function $id(id){
+	return document.getElementById(id)
+}
+
+function init(){
+	
+	loadValue("viewWidth",128);
+	loadValue("viewHeight",64);
+	loadValue("viewTall",0);
+	loadValue("frame",8);
+	loadValue("dir",8);
+	loadValue("offset",0);
+	loadValue("margin",0);
+	loadValue("color","#ffffff");
+	loadValue("bcolor","#000000");
+	loadValue("imgId","p0");
+	loadValue("loop","true");
+	loadValue("ortho",0);
+
+}
 function initConfig(){
-	Config.viewWidth=window.localStorage["vw"]=Number($id("vw").value)||128;
-	Config.viewHeight=window.localStorage["vh"]=Number($id("vh").value)||64;
-	Config.viewTall=window.localStorage["vt"]=Number($id("vt").value)||0;
-	Config.frame=window.localStorage["frame"]=Number($id("frame").value)||8;
-	Config.dir=window.localStorage["dir"]=Number($id("dir").value)||8;
-	Config.offset=window.localStorage["offset"]=Number($id("offset").value)||0;
-	Config.margin=window.localStorage["margin"]=Number($id("margin").value)||0;
-	Config.color=window.localStorage["color"]=$id("color").value||"#ffffff";
-	Config.bcolor=window.localStorage["bcolor"]=$id("bcolor").value||"#000000";
-	Config.imgId=window.localStorage["imgId"]=$id("imgId").value||"p0";
-	Config.loop=window.localStorage["loop"]=$id("loop").value||"true";
+	setValue("viewWidth",Number,128);
+	setValue("viewHeight",Number,64);
+	setValue("viewTall",Number,0);
+	setValue("frame",Number,8);
+	setValue("dir",Number,8);
+	setValue("offset",Number,0);
+	setValue("margin",Number,0);
+	setValue("color",String,"#ffffff");
+	setValue("bcolor",String,"#000000");
+	setValue("imgId",String,"p0");
+	setValue("loop",String,"true");
+	setValue("ortho",Number,0);
+	if (Config.ortho){
+		Config.viewTall=0;
+	}
 
 	Config.halfViewWidth=Config.viewWidth/2;
 	Config.halfViewHeight=Config.viewHeight/2;
@@ -73,7 +88,7 @@ function initConfig(){
 	Config.width=(Config.viewWidth+Config.margin*2)*Config.frame;
 	Config.height=(Config.viewHeight+Config.viewTall+Config.margin*2)*Config.dir;
 
-	Config.dirPoint=[
+	var dp=Config.dirPoint=[
 		[ Config.viewWidth, Config.halfViewHeight ],
 		[],
 		[ Config.halfViewWidth, Config.viewHeight ],
@@ -83,17 +98,18 @@ function initConfig(){
 		[ Config.halfViewWidth,0 ],
 		[]
 	];
-Config.dirPoint[1][0]=(Config.dirPoint[0][0]+Config.dirPoint[2][0])/2;
-Config.dirPoint[1][1]=(Config.dirPoint[0][1]+Config.dirPoint[2][1])/2;
 
-Config.dirPoint[3][0]=(Config.dirPoint[2][0]+Config.dirPoint[4][0])/2;
-Config.dirPoint[3][1]=(Config.dirPoint[2][1]+Config.dirPoint[4][1])/2;
+	dp[1][0]=(dp[0][0]+dp[2][0])/2;
+	dp[1][1]=(dp[0][1]+dp[2][1])/2;
 
-Config.dirPoint[5][0]=(Config.dirPoint[4][0]+Config.dirPoint[6][0])/2;
-Config.dirPoint[5][1]=(Config.dirPoint[4][1]+Config.dirPoint[6][1])/2;
+	dp[3][0]=(dp[2][0]+dp[4][0])/2;
+	dp[3][1]=(dp[2][1]+dp[4][1])/2;
 
-Config.dirPoint[7][0]=(Config.dirPoint[6][0]+Config.dirPoint[0][0])/2;
-Config.dirPoint[7][1]=(Config.dirPoint[6][1]+Config.dirPoint[0][1])/2;
+	dp[5][0]=(dp[4][0]+dp[6][0])/2;
+	dp[5][1]=(dp[4][1]+dp[6][1])/2;
+
+	dp[7][0]=(dp[6][0]+dp[0][0])/2;
+	dp[7][1]=(dp[6][1]+dp[0][1])/2;
 
 }
 
@@ -105,6 +121,20 @@ function drawEntity(context,x,y){
 	context.strokeStyle=Config.bcolor;
 	context.translate(x,y);
 	context.beginPath();
+
+	if (Config.ortho){
+		context.moveTo(0,0);
+		context.lineTo(Config.viewWidth,0);
+		context.lineTo(Config.viewWidth,Config.viewHeight);
+		context.lineTo(0,Config.viewHeight);
+		context.lineTo(0,0);
+		context.fill();
+		context.lineWidth=2;
+		context.stroke();
+		context.closePath();
+		context.restore();
+		return;
+	}
 	var path=[
 		[ 0 , Config.halfViewHeight ],
 		[ Config.halfViewWidth,0 ],
@@ -274,15 +304,19 @@ function stringify(obj){
 #canvas {
 	display: none;
 }
+input[type="text"] {
+	width : 80px;
+}
 </style>
 </head>
 <body onload="init()">
 <br>
-viewWidth:<input type="text" value="0" id="vw">&#160;&#160;,&#160;&#160;
-viewHeight:<input type="text" value="0" id="vh">&#160;&#160;,&#160;&#160;
-viewTall:<input type="text" value="0" id="vt">&#160;&#160;,&#160;&#160;
+viewWidth:<input type="text" value="0" id="viewWidth">&#160;&#160;,&#160;&#160;
+viewHeight:<input type="text" value="0" id="viewHeight">&#160;&#160;,&#160;&#160;
+viewTall:<input type="text" value="0" id="viewTall">&#160;&#160;,&#160;&#160;
 margin:<input type="text" value="2" id="margin">&#160;&#160;,&#160;&#160;
 offset:<input type="text" value="2" id="offset"><br>
+ortho:<input type="text" value="1" id="ortho">&#160;&#160;,&#160;&#160;
 frame:<input type="text" value="0" id="frame">&#160;&#160;,&#160;&#160;
 dir:<input type="text" value="0" id="dir"><br>
 imgId:<input type="text" value="p0" id="imgId">&#160;&#160;,&#160;&#160;

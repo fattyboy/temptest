@@ -159,7 +159,6 @@ TiledMapCarmack.inherit( TiledMapMulti ,
 		_idxCanvasRow = idxCanvasRow;					
 		for (var r=fromRow;r<toRow;r++){
 			
-		
 			var _r = this.getNewRow(r);	
 			if (_r==null){
 				continue;

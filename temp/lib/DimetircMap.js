@@ -25,14 +25,14 @@ DimetircMap.prototype = {
 
     viewWidth: 0,
     viewHeight: 0,
-    viewScaleY: null,
-    viewRotation: Math.PI / 4,
     viewX: 0,
     viewY: 0,
     viewCol: 0,
     viewRow: 0,
     viewCols: 0,
     viewRows: 0,
+    viewScaleY: null,
+    viewRotation: Math.PI / 4,
 
     repeatX: false,
     repeatY: false,
@@ -45,14 +45,13 @@ DimetircMap.prototype = {
     init: function(scene) {
         this.scene = scene;
 
+        this.viewWidth = scene.viewWidth;
+        this.viewHeight = scene.viewHeight;
 
         this.viewScaleY = this.viewScaleY || this.tileHeight / this.tileWidth;
         this.viewScaleZ = Math.sqrt(1 - this.viewScaleY * this.viewScaleY);
         this.cos = Math.cos(this.viewRotation);
         this.sin = Math.sin(this.viewRotation);
-
-        this.viewWidth = scene.viewWidth;
-        this.viewHeight = scene.viewHeight;
 
         this.halfTileWidth = this.tileWidth / 2;
         this.halfTileHeight = this.tileHeight / 2;
@@ -298,6 +297,7 @@ DimetircMap.prototype = {
             this.updateBufferCarmack();
             this.updateBufferInfoCarmack();
             this.saveLastState();
+            this.scrolled = false;
         }
         var ox = this.bufferOffsetX;
         var oy = this.bufferOffsetY;
@@ -311,7 +311,7 @@ DimetircMap.prototype = {
             }
         }
 
-        this.scrolled = false;
+        
     },
 
     renderOrigin: function(context) {
