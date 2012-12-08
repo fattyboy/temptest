@@ -333,29 +333,30 @@ TiledMap.prototype={
         
 
         var colInBuffer = fromCol % this.bufferTileCols;
-        colInBuffer=(colInBuffer + this.bufferTileCols) % this.bufferTileCols;
+        (colInBuffer<0)&&(colInBuffer=this.bufferTileCols+colInBuffer);
 
         var rowInBuffer = fromRow % this.bufferTileRows;
-        rowInBuffer= (rowInBuffer + this.bufferTileRows)%this.bufferTileRows;
+        (rowInBuffer<0)&&(rowInBuffer=this.bufferTileRows+rowInBuffer);
 
 
         var bCol=0 , bRow=0;
         
         if (this.bufferCols>1){ 
             bCol= Math.floor( fromCol / this.bufferTileCols) % this.bufferCols;
-            bCol=(bCol + this.bufferCols)%this.bufferCols;
+            (bCol<0)&&(bCol=this.bufferCols+bCol);
         }
         if (this.bufferRows>1){     
             bRow= Math.floor( fromRow / this.bufferTileRows) % this.bufferRows;
-            bRow= (bRow + this.bufferRows) % this.bufferRows;
+            (bRow<0)&&(bRow=this.bufferRows+bRow);
         }
 
-        var _rowInBuffer = rowInBuffer;
         var _bRow = bRow;
+        var _rowInBuffer = rowInBuffer;
         for(var r = fromRow; r < toRow; r++) {
             var row = r;
-            var _colInBuffer = colInBuffer;
+            
             var _bCol = bCol;
+            var _colInBuffer = colInBuffer;
             for(var c = fromCol; c < toCol; c++) {
                 var col = c;
 
@@ -367,22 +368,19 @@ TiledMap.prototype={
                         tileInfo = this.data[_row][_col];
                     }
                 }
-
                 var _context=this.contextMatrix[_bRow][_bCol];
                 this.renderTile(_context,_colInBuffer,_rowInBuffer, tileInfo);
 
-                _colInBuffer++;
-                if (_colInBuffer==this.bufferTileCols){
+                if (++_colInBuffer===this.bufferTileCols){
                     _colInBuffer=0;
-                    _bCol= (++_bCol)%this.bufferCols;
+                    (++_bCol===this.bufferCols)&&(_bCol-=this.bufferCols);
                 }
                 
             }
 
-            _rowInBuffer++;
-            if (_rowInBuffer==this.bufferTileRows){
+            if (++_rowInBuffer===this.bufferTileRows){
                 _rowInBuffer=0;
-                 _bRow= (++_bRow)%this.bufferRows;
+                (++_bRow===this.bufferRows)&&(_bRow-=this.bufferRows);
             }
 
         }
