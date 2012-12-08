@@ -1,3 +1,4 @@
+
 function DimetircMap(cfg) {
     for(var property in cfg) {
         this[property] = cfg[property];
