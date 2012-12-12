@@ -58,6 +58,7 @@ function init(){
 	loadValue("imgId","p0");
 	loadValue("loop","true");
 	loadValue("ortho",0);
+	loadValue("dirFlag",0);
 
 }
 function initConfig(){
@@ -73,6 +74,7 @@ function initConfig(){
 	setValue("imgId",String,"p0");
 	setValue("loop",String,"true");
 	setValue("ortho",Number,0);
+	setValue("dirFlag",Number,0);
 	if (Config.ortho){
 		Config.viewTall=0;
 	}
@@ -212,7 +214,9 @@ function create(){
 			console.log(Config.offset)
 			y+=offset;
 			drawEntity(context,x,y);
-			drawEntityDir(context,x,y,r);
+			if (Config.dirFlag){
+				drawEntityDir(context,x,y,r);
+			}
 		}
 	}
 
@@ -317,6 +321,7 @@ viewTall:<input type="text" value="0" id="viewTall">&#160;&#160;,&#160;&#160;
 margin:<input type="text" value="2" id="margin">&#160;&#160;,&#160;&#160;
 offset:<input type="text" value="2" id="offset"><br>
 ortho:<input type="text" value="1" id="ortho">&#160;&#160;,&#160;&#160;
+dirFlag:<input type="text" value="1" id="dirFlag">&#160;&#160;,&#160;&#160;
 frame:<input type="text" value="0" id="frame">&#160;&#160;,&#160;&#160;
 dir:<input type="text" value="0" id="dir"><br>
 imgId:<input type="text" value="p0" id="imgId">&#160;&#160;,&#160;&#160;
