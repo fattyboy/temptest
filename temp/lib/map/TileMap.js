@@ -33,6 +33,7 @@ TileMap.prototype={
     dataCols : 0,
     startTileIndex : null,
     alphaTiles : null,
+    ignorTiles : null,
 
     img : null,
     imgCols : 0,
@@ -89,9 +90,9 @@ TileMap.prototype={
     initDataInfo : function() {
 
         this.dataCols = this.dataCols || 1;
-        this.data = (this.rawData[0] && this.rawData[0].length > 0) ? this.rawData : this.arrayTo2D(this.rawData, this.dataCols);
-        this.dataCols = this.data[0].length;
-        this.dataRows = this.data.length || 0;
+        this.rawData = (this.rawData[0] && this.rawData[0].length > 0) ? this.rawData : this.arrayTo2D(this.rawData, this.dataCols);
+        this.dataCols = this.rawData[0].length;
+        this.dataRows = this.rawData.length || 0;
 
         if(this.repeatX) {
             this.getNewCol = this.getNewColCircle;
@@ -119,6 +120,7 @@ TileMap.prototype={
         this.maxTileIndex = this.imgRows * this.imgCols - 1 + this.startTileIndex;
         this.emptyTile=this.emptyTile||this.startTileIndex-1;
         this.alphaTiles=this.alphaTiles||[];
+        this.ignorTiles=this.ignorTiles||[];
     },
 
     setRawData : function(rawData){
@@ -157,18 +159,23 @@ TileMap.prototype={
             row: r
         };
         if(this.img) {
-            var clear = no === null || no === undefined || no < this.startTileIndex || no > this.maxTileIndex;
-            var imgNo = no - this.startTileIndex;
-            if (!clear){
-                clear=this.alphaTiles.indexOf(no)!=-1;
-                var imgX = (imgNo % this.imgCols) * this.tileWidth;
-                var imgY = Math.floor(imgNo / this.imgCols) * this.tileHeight;
-                tile.iX = imgX;
-                tile.iY = imgY;
-            }
-            tile.clear=clear;
-            tile.iNo = clear ? null : imgNo;
+            tile.ignor=this.ignorTiles.indexOf(no)!=-1;
+            if (!tile.ignor){
+                var clear = no === null || no === undefined || no < this.startTileIndex || no > this.maxTileIndex;
 
+                if (!clear){
+                    var imgNo = no - this.startTileIndex;
+                    clear=this.alphaTiles.indexOf(no)!=-1;
+                    var imgX = (imgNo % this.imgCols) * this.tileWidth;
+                    var imgY = Math.floor(imgNo / this.imgCols) * this.tileHeight;
+                    tile.iX = imgX;
+                    tile.iY = imgY;
+                    tile.iNo = imgNo;
+                }else{
+                    tile.iNo=null;
+                }
+                tile.clear=clear;
+            }
         }
         return tile;
     },
@@ -426,17 +433,23 @@ TileMap.prototype={
             this.clearTile(context,x,y);
         }
         if (tileInfo){
-            context.drawImage(this.img, tileInfo.iX, tileInfo.iY, this.tileWidth, this.tileHeight, 
-                x, y, this.tileWidth, this.tileHeight);
-
+            if (tileInfo.iNo!==null && !tileInfo.ignor ){
+                context.drawImage(this.img, tileInfo.iX, tileInfo.iY, this.tileWidth, this.tileHeight, 
+                    x, y, this.tileWidth, this.tileHeight);
+            }
             // debug
             // context.fillText(tileInfo.col+","+tileInfo.row, 5+x, 30+y);
+            context.lineWidth=1;
+            context.strokeStyle="#aabbff";
+            context.strokeRect(x, y, this.tileWidth, this.tileHeight);
 
         }
               
     },
 
+    update : function(timeStep){
 
+    },
     // common 
     render : function(context){
         // if (this.scale!=1){

@@ -21,7 +21,7 @@ BFSearch.prototype = {
 		return false;
 	},
 
-	findSuccessors: function(node, openList, closedKeys) {
+	findSuccessors: function(node, openList, closedKeys, successors) {
 		return [];
 	},
 
@@ -40,27 +40,28 @@ BFSearch.prototype = {
 		var openList = [];
 		var closedKeys = {};
 
-		var prevCache = {};
+		var prevNodes = {};
 	
 		openList.push(startNode);
 
-
+		var successors=[];
 		while (openList.length) {
 			var node = openList.shift();
 			closedKeys[node.id] = node;
-			var successors = this.findSuccessors(node, openList, closedKeys);
+
+			successors = this.findSuccessors(node, openList, closedKeys,successors);
 
 			for (var i = 0, len = successors.length; i < len; i++) {
 				var successor = successors[i];
 				if (!closedKeys[successor.id]) {
 					closedKeys[successor.id] = successor;
 
-					prevCache[successor.id] = node;
+					prevNodes[successor.id] = node;
 
 					if (this.isSolution(successor, endNode)) {
-						node = endNode;
+						node = successor;
 						var nodeList = [node];
-						while ((node = prevCache[node.id])) {
+						while ((node = prevNodes[node.id])) {
 							nodeList.push(node);
 						}
 						return nodeList;
@@ -68,6 +69,7 @@ BFSearch.prototype = {
 					openList.push(successor);
 				}
 			}
+			successors.length=0;
 		}
 		return false;
 
@@ -98,7 +100,7 @@ AStarSearch.prototype = {
 		return false;
 	},
 
-	findSuccessors: function(node, openList, closedKeys) {
+	findSuccessors: function(node, openList, closedKeys,successors) {
 		return [];
 	},
 
@@ -108,20 +110,6 @@ AStarSearch.prototype = {
 
 	insertToOpenList: function(node, openList, cost) {
 		return openList.push(node);
-	},
-
-	pickFromOpenList: function(openList) {
-		var min = Infinity;
-		var idx = 0;
-		for (var i = 0, len = openList.length; i < len; i++) {
-			var current = openList[i];
-			var currentCost = current.f;
-			if (currentCost < min) {
-				idx = i;
-				min = currentCost;
-			}
-		}
-		return openList.splice(idx, 1)[0];
 	},
 
 	//    diagonal : function (fromNode, toNode) {
@@ -142,79 +130,94 @@ AStarSearch.prototype = {
     	return 1;//this.euclidean(fromNode, toNode);
     },
 
-	search: function(startNode, endNode ,openList) {
+	pickFromOpenList: function(openList) {
+		return openList.pop();
 
-		this.debugInfo ={};
-
-		this.reset(startNode, endNode);
-		startNode.g=endNode.h=0;
-		endNode.f=endNode.g=Infinity;
-		startNode.f=startNode.h=this.getCostH(startNode,endNode);
-		
-		this.beforeSearch(startNode, endNode);
-
-		var closedKeys = [];
-		closedKeys = {};
-
-		var visitedCache = {};
-		var prevCache = {};
-		
-		openList = openList||[];
-		openList.push(startNode);
-		visitedCache[startNode.id]=true;
-		visitedCache[endNode.id]=true;		
-		
-		// var openList=new BinaryHeap(function(node){return node.f;});
-		while (openList.length) {
-
-			// var node = openList.pop(); 
-			var node = this.pickFromOpenList(openList);
-			closedKeys[node.id] = node;
-			
-			if (this.isSolution(node, endNode)) {
-				var nodeList = [endNode];
-				while ((node = prevCache[node.id])) {
-					nodeList.unshift(node);
-				}
-				return nodeList;
-			}
-
-			var successors = this.findSuccessors(node, openList, closedKeys);
-			for (var i = 0, len = successors.length; i < len; i++) {
-				var successor = successors[i];
-				if (successor.length){
-					//debugger;
-				}
-				var id=successor.id;
-				if (!closedKeys[id]) {
-					if (!visitedCache[id]){
-						visitedCache[id]=true;
-						successor.f=0;
-						successor.g=Infinity;
-						successor.h=this.getCostH(successor,endNode);
-					}
-					var costG = node.g+this.getStepCost(node, successor); 
-				    if(costG < successor.g) {
-				    	openList.push(successor);
-						prevCache[id] = node;
-
-					    successor.g = costG;
-					    successor.f = successor.g + successor.h;
-
-					    this.debugInfo[successor.id]={
-						    	x :  successor.x ,
-						    	y :  successor.y ,
-						    	g :  successor.g ,
-						    	h :  successor.h
-						    }	      		
-				    }
-				}
+		var min = Infinity, last=openList.length-1;
+		var idx = 0;
+		for (var i = last ; i >0; i--) {
+			var current = openList[i];
+			var currentCost = current.f;
+			if (currentCost < min) {
+				idx = i;
+				min = currentCost;
 			}
 		}
-		
-		return [];
+		var c=openList[idx];
+		openList[idx]=openList[last];
+		openList.length=last;
+		return c;
+		// return openList.splice(idx, 1)[0];
+	},
 
-	}
+search : function(startNode, endNode, options) {
+
+    this.finding=true;
+    options=options||{};
+    var path=[];
+    this.startNode = startNode;
+    this.endNode = endNode;
+    this.grid = options.grid||this.grid;
+
+    var openList = options.openList||new BinaryHeap(function(node){
+                                    return node.f;
+                                }) ;
+
+    var openedKeys = this.openedKeys={};
+    var closedKeys = this.closedKeys={};
+    
+    delete startNode.parent;
+    startNode.g = 0;
+    startNode.f = startNode.h = this.getHeuristicCost(startNode,endNode);
+    openList.push(startNode);
+    openedKeys[startNode.id]=true;
+
+    // while the open list is not empty
+    while (openList.length>0) {
+        var node = this.popBest(openList);
+
+        if (this.isSolution(node, endNode)) {
+        	path=[node];
+        	while( (node=node.parent) ){
+        		path.unshift(node);
+        	}
+        	this.finding=false;
+        	return path;
+        }
+
+        closedKeys[node.id]=true;
+
+        var successors=this.findSuccessors(node);
+        for(var i = 0, l = successors.length; i < l; i++) {
+        	var successor = successors[i];
+        	var id=successor.id;
+        	if (closedKeys[id]) {
+                continue;
+            }
+           	var opened=openedKeys[id];
+            var g = node.g+this.getStepCost(node, successor); 
+            if (!opened || g < successor.g) {
+                successor.g = g;
+                successor.h = successor.h || this.getHeuristicCost(successor,endNode);
+                successor.f = successor.g + successor.h;
+                successor.parent = node;
+
+                if (!opened) {
+			// window.successorPoints=window.successorPoints||[];
+			// window.successorPoints.push(successor);
+
+                    openList.push(successor);
+                    openedKeys[id] = true;
+                } else {
+					this.bubbleUp(openList,successor);
+                }
+            }	    
+        }
+    }
+    this.finding=false;
+    return path;
+},
+
 
 };
 

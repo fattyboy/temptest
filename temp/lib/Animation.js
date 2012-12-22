@@ -65,11 +65,11 @@
 			}
 			var last=this.currentFrameIndex;
 			if (this.currentFramePlayed >= this.currentFrame.d) {
-				if (this.currentFrameIndex == this.frameCount - 1) {
+				if (this.currentFrameIndex === this.frameCount - 1) {
 					if (this.loop) {
 						this.currentFrameIndex = this.startFrameIndex;
 					}
-					this.onEnd(timeStep);
+					this.onEnd && this.onEnd(timeStep);
 				} else {
 					this.currentFrameIndex++;
 				}
@@ -78,12 +78,10 @@
 			} else {
 				this.currentFramePlayed += timeStep;
 			}
-			return last!=this.currentFrameIndex;
+			return last!==this.currentFrameIndex;
 		},
 
-		onEnd: function(timeStep) {
-			
-		},
+		onEnd: null,
 		
 		render : function(context, timeStep){
 			var f=this.currentFrame;
