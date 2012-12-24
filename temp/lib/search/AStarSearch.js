@@ -30,12 +30,13 @@ var AStarSearch = function(cfg) {
 		    delete startNode.parent;
 		    startNode.g = 0;
 		    startNode.f = startNode.h = this.getHeuristicCost(startNode,endNode);
+		    
 		    openList.push(startNode);
 		    openedKeys[startNode.id]=true;
 
 		    // while the open list is not empty
 		    while (openList.length>0) {
-		        var node = this.popBest(openList);
+		        var node = this.pickFromOpenList(openList);
 
 		        if (this.isSolution(node, endNode)) {
 		        	path=[node];
@@ -64,10 +65,10 @@ var AStarSearch = function(cfg) {
 		                successor.parent = node;
 
 		                if (!opened) {
-		                    openList.push(successor);
+		                	this.addToOpenList(openList,successor);
 		                    openedKeys[id] = true;
 		                } else {
-							this.bubbleUp(openList,successor);
+							this.resortOpenList(openList,successor);
 		                }
 		            }	    
 		        }
@@ -82,24 +83,26 @@ var AStarSearch = function(cfg) {
 		},
 
 		getStepCost: function(fromNode, toNode) {
-			var dx=toNode.col-fromNode.col;
-			var dy=toNode.row-fromNode.row;
 			var toCost=toNode.cost;
-			if (dx&&dy){
-				return 1.4*toCost;
+			if (toNode.col==fromNode.col||toNode.row==fromNode.row){
+				return toCost;
 			}
-			return toCost;
+			return 1.4*toCost;
 		},
 
-		bubbleUp : function(list,node){
-			list.bubbleUp(node);
+		addToOpenList : function(list,node){
+			list.push(node);
+		},	
+
+		resortOpenList : function(list,node){
+			list.resortElement(node);
 		},
 
-		popBest : function(list){
+		pickFromOpenList : function(list){
 			return list.pop();
 		},
-		
-		popBestFromArray : function(list){
+	
+		pickFromArray : function(list){
 			var min = Infinity, last=list.length-1;
 			var idx = 0;
 			for (var i = last ; i >0; i--) {

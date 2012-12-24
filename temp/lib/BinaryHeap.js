@@ -1,26 +1,31 @@
+
 function BinaryHeap(scoreFunction){
   this.content = [];
   this.scoreFunction = scoreFunction;
-  // this.compareFunction = compareFunction;
 }
 
 BinaryHeap.prototype = {
-  push: function(element) {
-    // Add the new element to the end of the array.
-    this.content.push(element);
-    // Allow it to bubble up.
-    this.bubbleUp(this.content.length - 1);
 
+  clear : function(){
+    this.length=this.content.length=0;
+  },
+
+  size: function() {
+    return this.content.length;
+  },
+
+  indexOf : function(node){
+    return this.content.indexOf(node);
+  },
+  push: function(element) {
+    this.content.push(element);
+    this.bubbleUp(this.content.length - 1);
     this.length=this.content.length;
   },
 
   pop: function() {
-    // Store the first element so we can return it later.
     var result = this.content[0];
-    // Get the element at the end of the array.
     var end = this.content.pop();
-    // If there are any elements left, put the end element at the
-    // start, and let it sink down.
     if (this.content.length > 0) {
       this.content[0] = end;
       this.sinkDown(0);
@@ -31,17 +36,14 @@ BinaryHeap.prototype = {
 
   remove: function(node) {
     var len = this.content.length;
-    // To remove a value, we must search through the array to find
-    // it.
+    var nodeScore=this.scoreFunction(node);
     for (var i = 0; i < len; i++) {
       if (this.content[i] == node) {
-        // When it is found, the process seen in 'pop' is repeated
-        // to fill up the hole.
         var end = this.content.pop();
         this.length=this.content.length;
         if (i != len - 1) {
           this.content[i] = end;
-          if (this.scoreFunction(end) < this.scoreFunction(node))
+          if (this.scoreFunction(end) < nodeScore)
             this.bubbleUp(i);
           else
             this.sinkDown(i);
@@ -52,30 +54,28 @@ BinaryHeap.prototype = {
     throw new Error("Node not found.");
   },
 
-  size: function() {
-    return this.content.length;
+  resortElement : function(node){
+    var index=this.content.indexOf(node);
+    index=this.bubbleUp(index);
+    index=this.sinkDown(index);
+    return index;
   },
 
   bubbleUp: function(n) {
-    // Fetch the element that has to be moved.
     var element = this.content[n];
-    // When at 0, an element can not go up any further.
+
     while (n > 0) {
-      // Compute the parent element's index, and fetch it.
-      var parentN = ((n + 1) >> 1 ) - 1,
-          parent = this.content[parentN];
-      // Swap the elements if the parent is greater.
+      var parentN = ((n + 1) >> 1 ) - 1;
+      var parent = this.content[parentN];
       if (this.scoreFunction(element) < this.scoreFunction(parent)) {
         this.content[parentN] = element;
         this.content[n] = parent;
-        // Update 'n' to continue at the new position.
         n = parentN;
-      }
-      // Found a parent that is less, no need to move it further.
-      else {
+      }else {
         break;
       }
     }
+    return n;
   },
 
   sinkDown: function(n) {
@@ -85,55 +85,36 @@ BinaryHeap.prototype = {
         elemScore = this.scoreFunction(element);
 
     while(true) {
-      // Compute the indices of the child elements.
-      var child2N = (n + 1) << 1, child1N = child2N - 1;
-      // This is used to store the new position of the element,
-      // if any.
+ 
       var swap = null;
-      // If the first child exists (is inside the array)...
+ 
+      var child2N = (n + 1) << 1, 
+          child1N = child2N - 1;
+
       if (child1N < length) {
-        // Look it up and compute its score.
         var child1 = this.content[child1N],
             child1Score = this.scoreFunction(child1);
-        // If the score is less than our element's, we need to swap.
         if (child1Score < elemScore)
           swap = child1N;
       }
-      // Do the same checks for the other child.
       if (child2N < length) {
         var child2 = this.content[child2N],
             child2Score = this.scoreFunction(child2);
-        if (child2Score < (swap == null ? elemScore : child1Score))
+        if (child2Score < (swap === null ? elemScore : child1Score))
           swap = child2N;
       }
 
-      // If the element needs to be moved, swap it, and continue.
-      if (swap != null) {
-        this.content[n] = this.content[swap];
-        this.content[swap] = element;
-        n = swap;
-      }
-      // Otherwise, we are done.
-      else {
+      if (swap === null) {
         break;
       }
+      this.content[n] = this.content[swap];
+      this.content[swap] = element;
+      n = swap;
+
     }
+
+    return n;
   }
 };
-
-
-
-// var bh=new BinaryHeap(function(v){
-//   return v;
-// })
-// var r=[]
-// for (var i=0;i<20;i++){
-//   var t=randomInt(10,99);
-//   r.push(t)
-//   bh.push(t)
-// }
-// console.log(r)
-// console.log(bh.content)
-
 
 

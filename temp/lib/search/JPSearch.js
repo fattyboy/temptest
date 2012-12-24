@@ -10,12 +10,6 @@ var JPSearch = function(cfg) {
 	var PT = {
 		constructor : JPSearch,
 
-		blockCost : 9E9,
-
-		init : function(){
-
-		},
-
 		findSuccessors : function(node){
 			var successors=[];
 			var neighbors=this.pruneNeighbors(node);
@@ -128,8 +122,6 @@ var JPSearch = function(cfg) {
 
 		},
 
-
-
 		findJumpPoint : function (node, prevNode,  jumpInfo){
 
 			while(true){
@@ -185,17 +177,6 @@ var JPSearch = function(cfg) {
 		    	prevNode=node;
 		    	node=node[dx+""+dy];
 	    	}
-		},
-
-		
-		getStepCost: function(fromNode, toNode) {
-			var dx=toNode.col-fromNode.col;
-			var dy=toNode.row-fromNode.row;
-			var toCost=toNode.jumpCost||toNode.cost;
-			if (dx&&dy){
-				return 1.4*toCost
-			}
-			return toCost;
 		}
 
 	};
