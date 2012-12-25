@@ -1,28 +1,38 @@
 
-var AStarSearch = function(cfg) {
+var AStarStepSearch = function(cfg) {
 		for(var key in cfg) {
 			this[key] = cfg[key];
 		}
+		this.queue=[];
 	};
 
 (function(scope,undefined){
 
 	var PT = {
+		constructor : AStarStepSearch,
 
-		constructor : AStarSearch,
+		queue : null,
 
 		search : function(startNode, endNode, options) {
 
-		    options=options||{};
+			this.queue.push([startNode, endNode, options]);
+
+		},
+
+		startSearch : function(startNode, endNode, options){
+
+			options=options||{};			
 		    this.startNode = startNode;
 		    this.endNode = endNode;
 
-		    this.finding=true;
+			this.finding=true;
 
-		    this.callback=options.callback;
+		    this.perstep=options.perstep||150;
+		    this.callback=options.callback||function(path){ };
 		    this.grid = options.grid||this.grid;
+
 		    var path=this.path=[];
-		    var openList = this.openLost=options.openList||new BinaryHeap(function(node){
+		    var openList = this.openList = options.openList||new BinaryHeap(function(node){
 		                                    return node.f;
 		                                }) ;
 		    var openedKeys = this.openedKeys={};
@@ -35,23 +45,43 @@ var AStarSearch = function(cfg) {
 		    openList.push(startNode);
 		    openedKeys[startNode.id]=true;
 
-		    // while the open list is not empty
-		    while (openList.length>0) {
-		        var node = this.pickFromOpenList(openList);
+		},
+
+		update : function(){
+			if (!this.finding && this.queue.length>0){
+				var args=this.queue.pop();
+				this.startSearch(args[0],args[1],args[2]);
+			}
+
+			if (!this.finding){
+				return;
+			}
+			console.time("update finder");
+		    var startNode=this.startNode;
+		    var endNode=this.endNode;
+			var openList=this.openList;
+		   	var openedKeys = this.openedKeys;
+		    var closedKeys = this.closedKeys;
+		    var path=this.path;
+
+			var count=this.perstep;
+			while( (count--) >0){
+				if (openList.length===0){
+					this.finding=false;
+					break;
+				}
+				var node = this.pickFromOpenList(openList);
 		        if (this.isSolution(node, endNode)) {
 		        	path.length=0;
 		        	do{
 		        		path.unshift(node);
 		        	}while((node=node.parent));
 		        	this.finding=false;
-		        	if (this.callback){
-		        		this.callback(path);
-		        	}
-		        	return path;
+
+		        	break;
 		        }
 
 		        closedKeys[node.id]=true;
-
 		        var successors=this.findSuccessors(node);
 
 		        for(var i = 0, l = successors.length; i < l; i++) {
@@ -76,66 +106,24 @@ var AStarSearch = function(cfg) {
 		                }
 		            }	    
 		        }
-		    }
-		    this.finding=false;
-		    if (this.callback){
-        		this.callback(path);
-        	}
-		    return path;
-		},
 
-
-		getHeuristicCost : function(node, endNode){
-			var dx=endNode.col-node.col,
-				dy=endNode.row-node.row;
-			return Math.sqrt(dx*dx+dy*dy) ;
-		},
-
-		getStepCost: function(fromNode, toNode) {
-			var toCost=toNode.cost;
-			if (toNode.col==fromNode.col||toNode.row==fromNode.row){
-				return toCost;
 			}
-			return 1.4*toCost;
-		},
 
-		addToOpenList : function(list,node){
-			list.push(node);
-		},	
-
-		resortOpenList : function(list,node){
-			list.resortElement(node);
-		},
-
-		pickFromOpenList : function(list){
-			return list.pop();
-		},
-	
-		pickFromArray : function(list){
-			var min = Infinity, last=list.length-1;
-			var idx = 0;
-			for (var i = last ; i >0; i--) {
-				var current = list[i];
-				var currentCost = current.f;
-				if (currentCost < min) {
-					idx = i;
-					min = currentCost;
-				}
+			console.timeEnd("update finder");
+			if (!this.finding){
+				this.callback(this.path);
 			}
-			var c=list[idx];
-			list[idx]=list[last];
-			list.length=last;
-			return c;
+
 		}
 
 	};
 
 
-	for (var key in BFSearch.prototype){
-		AStarSearch.prototype[key]=BFSearch.prototype[key];
+	for (var key in AStarSearch.prototype){
+		AStarStepSearch.prototype[key]=AStarSearch.prototype[key];
 	}
 	for (var key in PT){
-		AStarSearch.prototype[key]=PT[key];
+		AStarStepSearch.prototype[key]=PT[key];
 	}
 
 }(this));

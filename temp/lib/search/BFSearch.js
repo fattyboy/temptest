@@ -19,15 +19,15 @@ var BFSearch = function(cfg) {
 
         search : function(startNode, endNode, options) {
 
-            this.finding=true;
             options=options||{};
-            var path=[];
             this.startNode = startNode;
             this.endNode = endNode;
+
+            this.finding=true;
+
             this.grid = options.grid||this.grid;
-
-            var openList = options.openList||[] ;
-
+            var path=this.path=[];
+            var openList = this.openLost=options.openList||[];
             var openedKeys = this.openedKeys={};
             var closedKeys = this.closedKeys={};
             
@@ -39,21 +39,21 @@ var BFSearch = function(cfg) {
                 var node = openList.shift();
 
                 if (this.isSolution(node, endNode)) {
-                	path=[node];
-                	while( (node=node.parent) ){
-                		path.unshift(node);
-                	}
-                	this.finding=false;
-                	return path;
+                    path.length=0;
+                    do{
+                        path.unshift(node);
+                    }while((node=node.parent));
+                    this.finding=false;
+                    return path;
                 }
 
                 closedKeys[node.id]=true;
 
                 var successors=this.findSuccessors(node);
                 for(var i = 0, l = successors.length; i < l; i++) {
-                	var successor = successors[i];
-                	var id=successor.id;
-                	if (closedKeys[id] || openedKeys[id]) {
+                    var successor = successors[i];
+                    var id=successor.id;
+                    if (closedKeys[id] || openedKeys[id]) {
                         continue;
                     }
                     openList.push(successor);

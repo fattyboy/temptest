@@ -23,12 +23,12 @@ var proto={
 
         this.halfTileWidth = this.tileWidth / 2;
         this.halfTileHeight = this.tileHeight / 2;
-        this.tileSide = Math.sqrt( Math.pow(this.tileWidth,2)*2);
-        console.log(this.tileSide);
+        this.tileSide = Math.sqrt( Math.pow(this.tileWidth,2)/2);
         this.viewScaleY = this.viewScaleY || this.tileHeight / this.tileWidth;
         this.viewScaleZ = Math.sqrt(1 - this.viewScaleY * this.viewScaleY);
         this.cos = Math.cos(this.viewRotation);
         this.sin = Math.sin(this.viewRotation);
+        console.log(this.tileSide);
 
         this.viewTileCols = Math.ceil((this.viewWidth+this.tileWidth) / this.tileWidth );
         this.viewTileCols = this.getMinEven(this.viewTileCols+2);
@@ -212,7 +212,6 @@ var proto={
       
         return this.getTileInfo(c,r);
     },
-
 
 
     mapToView: function(x, y, z) {

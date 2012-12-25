@@ -14,7 +14,8 @@ MapGrid.prototype = {
 	
 	cost : {
 		0 : 1,
-		1 : 9E9		
+		1 : 1000,
+		2 : 2000	
 	},
 	tileWidth : 0,
 	tileHeight : 0,
